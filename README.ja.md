@@ -7,8 +7,6 @@
 
 ## なぜ作ったか
 
-[Model Context Protocol](https://modelcontextprotocol.io/) による**純粋なローカルブラウザ自動化**。
-
 - テレメトリなし — 閲覧データはローカルに留まる
 - Python不要 — Node.jsだけで動く
 - APIキー不要 — MCPクライアント（Claude Code等）が全ての推論を担当し、このサーバーはブラウザを操作するだけ
@@ -101,7 +99,6 @@ Claude Code の MCP設定（`~/.claude/settings.json`）に追加：
 
 - Node.js + TypeScript
 - [Playwright](https://playwright.dev/)（ブラウザ自動化）
-- [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk)（MCPサーバー）
 
 ## ライセンス
 

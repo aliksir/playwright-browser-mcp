@@ -7,8 +7,6 @@ A lightweight, standalone browser automation MCP server powered by [Playwright](
 
 ## Why?
 
-**Pure local browser automation** via the [Model Context Protocol](https://modelcontextprotocol.io/).
-
 - No telemetry — your browsing data stays on your machine
 - No Python required — just Node.js
 - No API keys needed — your MCP client (Claude Code, etc.) handles all reasoning; this server just drives the browser
@@ -101,7 +99,6 @@ Set `BROWSER_HEADLESS` to `"false"` to see the browser window.
 
 - Node.js + TypeScript
 - [Playwright](https://playwright.dev/) (browser automation)
-- [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) (MCP server)
 
 ## License
 
