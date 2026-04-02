@@ -13,7 +13,7 @@ Add to your Claude Code settings (`~/.claude/settings.json` or project settings)
   "mcpServers": {
     "playwright-browser": {
       "command": "node",
-      "args": ["C:/work/playwright-browser-mcp/dist/index.js"],
+      "args": ["/path/to/playwright-browser-mcp/dist/index.js"],
       "env": {
         "BROWSER_HEADLESS": "true"
       }
@@ -27,7 +27,7 @@ Set `BROWSER_HEADLESS` to `"false"` to see the browser window.
 ### Install Dependencies
 
 ```bash
-cd C:/work/playwright-browser-mcp
+cd /path/to/playwright-browser-mcp
 npm install
 npx playwright install chromium
 npm run build

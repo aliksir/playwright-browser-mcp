@@ -12,9 +12,14 @@
     "start": "node dist/index.js",
     "dev": "tsc --watch"
   },
-  "keywords": ["mcp", "playwright", "browser", "automation"],
-  "author": "",
+  "keywords": ["mcp", "playwright", "browser", "automation", "model-context-protocol", "claude-code"],
+  "author": "aliksir",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aliksir/playwright-browser-mcp.git"
+  },
+  "homepage": "https://github.com/aliksir/playwright-browser-mcp",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "playwright": "^1.52.0"
