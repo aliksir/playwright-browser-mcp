@@ -1,16 +1,17 @@
 # playwright-browser-mcp
 
+English | [日本語](README.ja.md)
+
 A lightweight, standalone browser automation MCP server powered by [Playwright](https://playwright.dev/).  
 **No telemetry. No external connections. No LLM dependency.** Just local browser control.
 
 ## Why?
 
-Existing browser automation MCP servers often come with:
-- Telemetry that sends your browsing data to third parties
-- Python runtime dependencies
-- Built-in LLM calls that require API keys
+**Pure local browser automation** via the [Model Context Protocol](https://modelcontextprotocol.io/).
 
-This project takes a different approach: **pure local browser automation** via the [Model Context Protocol](https://modelcontextprotocol.io/). Your AI client (Claude Code, etc.) makes all the decisions — this server just drives the browser.
+- No telemetry — your browsing data stays on your machine
+- No Python required — just Node.js
+- No API keys needed — your MCP client (Claude Code, etc.) handles all reasoning; this server just drives the browser
 
 ## Features
 
