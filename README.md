@@ -1,32 +1,38 @@
-# playwright-browser-mcp
+# secure-browser-mcp
 
 English | [日本語](README.ja.md)
 
-A lightweight, standalone browser automation MCP server powered by [Playwright](https://playwright.dev/).  
-**No telemetry. No external connections. No LLM dependency.** Just local browser control.
+**Security-first browser automation MCP server.** Built on [Playwright](https://playwright.dev/) with a strict local-only policy.
 
-## Why?
+## Security Features
 
-- No telemetry — your browsing data stays on your machine
-- No Python required — just Node.js
-- No API keys needed — your MCP client (Claude Code, etc.) handles all reasoning; this server just drives the browser
+| Feature | Detail |
+|---------|--------|
+| **Zero telemetry** | No data leaves your machine. No PostHog, no analytics, no cloud sync |
+| **Sensitive data masking** | Credit card numbers, SSNs, and emails are auto-masked in all tool responses |
+| **No external connections** | The server never phones home. Fully air-gappable |
+| **No LLM dependency** | No API keys, no AI calls. Your MCP client handles reasoning; this server just drives the browser |
+| **No Python required** | Pure Node.js. No Python runtime, no pip, no venv |
 
-## Features
+## Why not @playwright/mcp?
 
-- **14 browser tools** — navigate, click, type, screenshot, scroll, tabs, sessions
-- **DOM element indexing** — interactive elements get `data-mcp-index` attributes for stable identification
-- **Viewport-first prioritization** — `browser_get_state` returns visible elements first (up to 200)
-- **Sensitive data masking** — credit card numbers, SSNs, and emails are automatically masked in responses
-- **Session management** — multiple browser sessions with 30-minute auto-cleanup
-- **Headless/headed mode** — toggle via environment variable
+| | secure-browser-mcp | @playwright/mcp |
+|---|---|---|
+| Telemetry | None | None* |
+| Sensitive data masking | Built-in (CC, SSN, email) | No |
+| External connections | Zero | Depends on config |
+| DOM element stability | `data-mcp-index` (CSS-independent) | Accessibility snapshots |
+| Dependencies | Minimal (Playwright + MCP SDK) | Playwright + MCP SDK |
+
+\* @playwright/mcp itself has no telemetry, but does not mask sensitive data in responses passed to LLMs.
 
 ## Quick Start
 
 ### Install
 
 ```bash
-git clone https://github.com/aliksir/playwright-browser-mcp.git
-cd playwright-browser-mcp
+git clone https://github.com/aliksir/secure-browser-mcp.git
+cd secure-browser-mcp
 npm install
 npx playwright install chromium
 npm run build
@@ -39,9 +45,9 @@ Add to your Claude Code MCP settings (`~/.claude/settings.json`):
 ```json
 {
   "mcpServers": {
-    "playwright-browser": {
+    "secure-browser": {
       "command": "node",
-      "args": ["/path/to/playwright-browser-mcp/dist/index.js"],
+      "args": ["/path/to/secure-browser-mcp/dist/index.js"],
       "env": {
         "BROWSER_HEADLESS": "true"
       }
@@ -71,34 +77,31 @@ Set `BROWSER_HEADLESS` to `"false"` to see the browser window.
 | `browser_close_session` | Close a specific session |
 | `browser_close_all` | Close all sessions and browsers |
 
-## Typical Workflow
+## How Masking Works
 
-```
-1. browser_navigate  → open a page
-2. browser_get_state → see interactive elements with indices
-3. browser_click     → click element by index
-4. browser_type      → type into input by index
-5. browser_screenshot → verify the result
-6. browser_close_all → clean up
-```
+When `browser_type` or `browser_get_state` processes text, patterns are automatically replaced before the response reaches your MCP client:
+
+| Pattern | Masked as |
+|---------|-----------|
+| `4111 2222 3333 4444` | `****-****-****-****` |
+| `123-45-6789` (SSN) | `***-**-****` |
+| `user@example.com` | `<email>` |
+
+This prevents sensitive data from being sent to LLM context windows where it could be logged or cached.
 
 ## Design Decisions
 
-- **Zero external connections** — no telemetry, no cloud sync, no analytics. Everything stays local.
-- **No LLM dependency** — this server doesn't call any AI APIs. Your MCP client handles all reasoning.
-- **Lazy session cleanup** — sessions expire after 30 minutes of inactivity, checked on each tool call (no background timers).
-- **Viewport-first element indexing** — elements currently visible in the viewport are prioritized and indexed first.
+- **Zero external connections** — no telemetry, no cloud sync, no analytics. Everything stays local
+- **No LLM dependency** — this server doesn't call any AI APIs. Your MCP client handles all reasoning
+- **Lazy session cleanup** — sessions expire after 30 minutes of inactivity, checked on each tool call (no background timers)
+- **Viewport-first element indexing** — elements currently visible in the viewport are prioritized and indexed first
+- **`data-mcp-index` over CSS selectors** — injected attributes are stable across page re-renders, unlike CSS selectors that break with DOM changes
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `BROWSER_HEADLESS` | `true` | Set to `false` to show the browser window |
-
-## Tech Stack
-
-- Node.js + TypeScript
-- [Playwright](https://playwright.dev/) (browser automation)
 
 ## License
 

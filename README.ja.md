@@ -1,32 +1,37 @@
-# playwright-browser-mcp
-
-[Playwright](https://playwright.dev/) ベースの軽量ブラウザ自動化MCPサーバー。  
-**テレメトリなし。外部通信なし。LLM依存なし。** ローカル完結のブラウザ制御。
+# secure-browser-mcp
 
 [English](README.md) | 日本語
 
-## なぜ作ったか
+**セキュリティ最優先のブラウザ自動化MCPサーバー。** [Playwright](https://playwright.dev/)ベース、厳格なローカル専用ポリシー。
 
-- テレメトリなし — 閲覧データはローカルに留まる
-- Python不要 — Node.jsだけで動く
-- APIキー不要 — MCPクライアント（Claude Code等）が全ての推論を担当し、このサーバーはブラウザを操作するだけ
+## セキュリティ機能
 
-## 特徴
+| 機能 | 詳細 |
+|------|------|
+| **テレメトリゼロ** | データは一切外部に送信されない。PostHog・アナリティクス・クラウド同期なし |
+| **機密データマスキング** | クレジットカード番号、SSN、メールアドレスを全ツールレスポンスで自動マスク |
+| **外部通信なし** | サーバーは一切外部に接続しない。エアギャップ環境でも動作可能 |
+| **LLM非依存** | APIキー不要、AI呼び出しなし。MCPクライアントが推論を担当 |
+| **Python不要** | 純粋なNode.js。Pythonランタイム・pip・venv不要 |
 
-- **14のブラウザツール** — ナビゲーション、クリック、テキスト入力、スクリーンショット、スクロール、タブ、セッション
-- **DOM要素インデックス** — インタラクティブ要素に `data-mcp-index` 属性を付与して安定的に識別
-- **ビューポート優先** — `browser_get_state` は可視領域の要素を優先して返す（最大200件）
-- **機密データマスキング** — クレジットカード番号、SSN、メールアドレスをレスポンスで自動マスク
-- **セッション管理** — 複数ブラウザセッション対応、30分で自動クリーンアップ
-- **ヘッドレス/ヘッドフルモード** — 環境変数で切替
+## @playwright/mcp との違い
+
+| | secure-browser-mcp | @playwright/mcp |
+|---|---|---|
+| テレメトリ | なし | なし* |
+| 機密データマスキング | 内蔵（CC・SSN・email） | なし |
+| 外部通信 | ゼロ | 設定次第 |
+| DOM要素の安定性 | `data-mcp-index`（CSS非依存） | アクセシビリティスナップショット |
+
+\* @playwright/mcp自体にテレメトリはないが、LLMに渡されるレスポンス内の機密データをマスクする機能はない。
 
 ## クイックスタート
 
 ### インストール
 
 ```bash
-git clone https://github.com/aliksir/playwright-browser-mcp.git
-cd playwright-browser-mcp
+git clone https://github.com/aliksir/secure-browser-mcp.git
+cd secure-browser-mcp
 npm install
 npx playwright install chromium
 npm run build
@@ -34,14 +39,14 @@ npm run build
 
 ### 設定
 
-Claude Code の MCP設定（`~/.claude/settings.json`）に追加：
+Claude CodeのMCP設定（`~/.claude/settings.json`）に追加：
 
 ```json
 {
   "mcpServers": {
-    "playwright-browser": {
+    "secure-browser": {
       "command": "node",
-      "args": ["/path/to/playwright-browser-mcp/dist/index.js"],
+      "args": ["/path/to/secure-browser-mcp/dist/index.js"],
       "env": {
         "BROWSER_HEADLESS": "true"
       }
@@ -50,13 +55,13 @@ Claude Code の MCP設定（`~/.claude/settings.json`）に追加：
 }
 ```
 
-`BROWSER_HEADLESS` を `"false"` にするとブラウザウィンドウが表示される。
+`BROWSER_HEADLESS`を`"false"`にするとブラウザウィンドウが表示される。
 
 ## 利用可能なツール
 
 | ツール | 説明 |
 |--------|------|
-| `browser_navigate` | URLに移動（`new_tab` で新規タブ対応） |
+| `browser_navigate` | URLに移動（`new_tab`で新規タブ対応） |
 | `browser_get_state` | インデックス付きインタラクティブ要素を含むページ状態を取得 |
 | `browser_click` | 要素インデックスまたは座標でクリック |
 | `browser_type` | インデックス指定の要素にテキスト入力（機密データ自動マスク） |
@@ -71,34 +76,31 @@ Claude Code の MCP設定（`~/.claude/settings.json`）に追加：
 | `browser_close_session` | セッションを閉じる |
 | `browser_close_all` | 全セッション・ブラウザを閉じる |
 
-## 典型的なワークフロー
+## マスキングの仕組み
 
-```
-1. browser_navigate  → ページを開く
-2. browser_get_state → インデックス付き要素を確認
-3. browser_click     → インデックスで要素をクリック
-4. browser_type      → インデックスで入力欄にテキスト入力
-5. browser_screenshot → 結果を目視確認
-6. browser_close_all → クリーンアップ
-```
+`browser_type`や`browser_get_state`がテキストを処理する際、MCPクライアントにレスポンスが届く前にパターンが自動置換される：
+
+| パターン | マスク結果 |
+|---------|-----------|
+| `4111 2222 3333 4444` | `****-****-****-****` |
+| `123-45-6789`（SSN） | `***-**-****` |
+| `user@example.com` | `<email>` |
+
+LLMのコンテキストウィンドウに機密データが送信されることを防ぐ。
 
 ## 設計方針
 
 - **外部通信ゼロ** — テレメトリ・クラウド同期・アナリティクスなし。全てローカル完結
-- **LLM非依存** — このサーバーはAI APIを呼ばない。MCPクライアントが全ての推論を担当
-- **遅延セッションクリーンアップ** — 30分の非アクティブでセッション期限切れ。バックグラウンドタイマーなし
+- **LLM非依存** — このサーバーはAI APIを呼ばない。MCPクライアントが推論を担当
+- **遅延セッションクリーンアップ** — 30分の非アクティブでセッション期限切れ（バックグラウンドタイマーなし）
 - **ビューポート優先インデックス** — 現在表示中の要素を優先してインデックスを付与
+- **`data-mcp-index` > CSSセレクタ** — DOM変更に強い注入属性方式
 
 ## 環境変数
 
 | 変数 | デフォルト | 説明 |
 |------|-----------|------|
-| `BROWSER_HEADLESS` | `true` | `false` でブラウザウィンドウを表示 |
-
-## 技術スタック
-
-- Node.js + TypeScript
-- [Playwright](https://playwright.dev/)（ブラウザ自動化）
+| `BROWSER_HEADLESS` | `true` | `false`でブラウザウィンドウを表示 |
 
 ## ライセンス
 
